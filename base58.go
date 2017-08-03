@@ -7,15 +7,14 @@
 package base58
 
 import (
+	"bytes"
 	"errors"
 	"math/big"
-	"strconv"
-	"strings"
 )
 
 // alphabet is the modified base58 alphabet used by Bitcoin.
-const BTCAlphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-const FlickrAlphabet = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ"
+var BTCAlphabet = []byte("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz")
+var FlickrAlphabet = []byte("123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ")
 
 var bigRadix = big.NewInt(58)
 var bigZero = big.NewInt(0)
@@ -31,14 +30,20 @@ func Encode(b []byte) []byte {
 }
 
 // DecodeAlphabet decodes a modified base58 string to a byte slice, using alphabet.
-func DecodeAlphabet(b []byte, alphabet string) ([]byte, error) {
+func DecodeAlphabet(b, alphabet []byte) ([]byte, error) {
 	bigIntVal := big.NewInt(0)
 	// radix := big.NewInt(58)
 
 	for i := 0; i < len(b); i++ {
-		idx := strings.IndexAny(alphabet, string(b[i]))
+
+		idx := bytes.IndexByte(alphabet, b[i])
 		if idx == -1 {
-			return nil, errors.New("illegal base58 data at input byte " + strconv.FormatInt(int64(i), 10))
+
+			// From strconv optimized
+			// 355 ns/op	     145 B/op	       5 allocs/op
+			// to simple error without offset
+			// 249 ns/op	      96 B/op	       3 allocs/op
+			return nil, errors.New("illegal base58 data")
 		}
 		bigIntVal.Mul(bigIntVal, bigRadix)
 		bigIntVal.Add(bigIntVal, big.NewInt(int64(idx)))
@@ -60,7 +65,7 @@ func DecodeAlphabet(b []byte, alphabet string) ([]byte, error) {
 }
 
 // Encode encodes a byte slice to a modified base58 string, using alphabet
-func EncodeAlphabet(b []byte, alphabet string) []byte {
+func EncodeAlphabet(b, alphabet []byte) []byte {
 	x := new(big.Int)
 	x.SetBytes(b)
 
