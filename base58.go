@@ -2,6 +2,7 @@
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 // Modified by Juan Benet (juan@benet.ai)
+// Allocs optimized by Undiabler (undiabler@gmail.com)
 
 package base58
 
@@ -20,26 +21,26 @@ var bigRadix = big.NewInt(58)
 var bigZero = big.NewInt(0)
 
 // Decode decodes a modified base58 string to a byte slice, using BTCAlphabet
-func Decode(b string) ([]byte, error) {
+func Decode(b []byte) ([]byte, error) {
 	return DecodeAlphabet(b, BTCAlphabet)
 }
 
 // Encode encodes a byte slice to a modified base58 string, using BTCAlphabet
-func Encode(b []byte) string {
+func Encode(b []byte) []byte {
 	return EncodeAlphabet(b, BTCAlphabet)
 }
 
 // DecodeAlphabet decodes a modified base58 string to a byte slice, using alphabet.
-func DecodeAlphabet(b, alphabet string) ([]byte, error) {
+func DecodeAlphabet(b []byte, alphabet string) ([]byte, error) {
 	bigIntVal := big.NewInt(0)
-	radix := big.NewInt(58)
+	// radix := big.NewInt(58)
 
 	for i := 0; i < len(b); i++ {
 		idx := strings.IndexAny(alphabet, string(b[i]))
 		if idx == -1 {
 			return nil, errors.New("illegal base58 data at input byte " + strconv.FormatInt(int64(i), 10))
 		}
-		bigIntVal.Mul(bigIntVal, radix)
+		bigIntVal.Mul(bigIntVal, bigRadix)
 		bigIntVal.Add(bigIntVal, big.NewInt(int64(idx)))
 	}
 	temp := bigIntVal.Bytes()
@@ -59,7 +60,7 @@ func DecodeAlphabet(b, alphabet string) ([]byte, error) {
 }
 
 // Encode encodes a byte slice to a modified base58 string, using alphabet
-func EncodeAlphabet(b []byte, alphabet string) string {
+func EncodeAlphabet(b []byte, alphabet string) []byte {
 	x := new(big.Int)
 	x.SetBytes(b)
 
@@ -83,5 +84,5 @@ func EncodeAlphabet(b []byte, alphabet string) string {
 		answer[i], answer[j] = answer[j], answer[i]
 	}
 
-	return string(answer)
+	return answer
 }

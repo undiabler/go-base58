@@ -11,60 +11,60 @@ import (
 )
 
 var stringTests = []struct {
-	in  string
-	out string
+	in  []byte
+	out []byte
 }{
-	{"", ""},
-	{" ", "Z"},
-	{"-", "n"},
-	{"0", "q"},
-	{"1", "r"},
-	{"-1", "4SU"},
-	{"11", "4k8"},
-	{"abc", "ZiCa"},
-	{"1234598760", "3mJr7AoUXx2Wqd"},
-	{"abcdefghijklmnopqrstuvwxyz", "3yxU3u1igY8WkgtjK92fbJQCd4BZiiT1v25f"},
-	{"00000000000000000000000000000000000000000000000000000000000000", "3sN2THZeE9Eh9eYrwkvZqNstbHGvrxSAM7gXUXvyFQP8XvQLUqNCS27icwUeDT7ckHm4FUHM2mTVh1vbLmk7y"},
+	{[]byte(""), []byte("")},
+	{[]byte(" "), []byte("Z")},
+	{[]byte("-"), []byte("n")},
+	{[]byte("0"), []byte("q")},
+	{[]byte("1"), []byte("r")},
+	{[]byte("-1"), []byte("4SU")},
+	{[]byte("11"), []byte("4k8")},
+	{[]byte("abc"), []byte("ZiCa")},
+	{[]byte("1234598760"), []byte("3mJr7AoUXx2Wqd")},
+	{[]byte("abcdefghijklmnopqrstuvwxyz"), []byte("3yxU3u1igY8WkgtjK92fbJQCd4BZiiT1v25f")},
+	{[]byte("00000000000000000000000000000000000000000000000000000000000000"), []byte("3sN2THZeE9Eh9eYrwkvZqNstbHGvrxSAM7gXUXvyFQP8XvQLUqNCS27icwUeDT7ckHm4FUHM2mTVh1vbLmk7y")},
 }
 
 var invalidStringTests = []struct {
-	in  string
-	out string
+	in  []byte
+	out []byte
 }{
-	{"0", ""},
-	{"O", ""},
-	{"I", ""},
-	{"l", ""},
-	{"3mJr0", ""},
-	{"O3yxU", ""},
-	{"3sNI", ""},
-	{"4kl8", ""},
-	{"0OIl", ""},
-	{"!@#$%^&*()-_=+~`", ""},
+	{[]byte("0"), []byte("")},
+	{[]byte("O"), []byte("")},
+	{[]byte("I"), []byte("")},
+	{[]byte("l"), []byte("")},
+	{[]byte("3mJr0"), []byte("")},
+	{[]byte("O3yxU"), []byte("")},
+	{[]byte("3sNI"), []byte("")},
+	{[]byte("4kl8"), []byte("")},
+	{[]byte("0OIl"), []byte("")},
+	{[]byte("!@#$%^&*()-_=+~`"), []byte("")},
 }
 
 var hexTests = []struct {
-	in  string
-	out string
+	in  []byte
+	out []byte
 }{
-	{"61", "2g"},
-	{"626262", "a3gV"},
-	{"636363", "aPEr"},
-	{"73696d706c792061206c6f6e6720737472696e67", "2cFupjhnEsSn59qHXstmK2ffpLv2"},
-	{"00eb15231dfceb60925886b67d065299925915aeb172c06647", "1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L"},
-	{"516b6fcd0f", "ABnLTmg"},
-	{"bf4f89001e670274dd", "3SEo3LWLoPntC"},
-	{"572e4794", "3EFU7m"},
-	{"ecac89cad93923c02321", "EJDM8drfXA6uyA"},
-	{"10c8511e", "Rt5zm"},
-	{"00000000000000000000", "1111111111"},
+	{[]byte("61"), []byte("2g")},
+	{[]byte("626262"), []byte("a3gV")},
+	{[]byte("636363"), []byte("aPEr")},
+	{[]byte("73696d706c792061206c6f6e6720737472696e67"), []byte("2cFupjhnEsSn59qHXstmK2ffpLv2")},
+	{[]byte("00eb15231dfceb60925886b67d065299925915aeb172c06647"), []byte("1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L")},
+	{[]byte("516b6fcd0f"), []byte("ABnLTmg")},
+	{[]byte("bf4f89001e670274dd"), []byte("3SEo3LWLoPntC")},
+	{[]byte("572e4794"), []byte("3EFU7m")},
+	{[]byte("ecac89cad93923c02321"), []byte("EJDM8drfXA6uyA")},
+	{[]byte("10c8511e"), []byte("Rt5zm")},
+	{[]byte("00000000000000000000"), []byte("1111111111")},
 }
 
 func TestBase58(t *testing.T) {
 	// Base58Encode tests
 	for x, test := range stringTests {
 		tmp := []byte(test.in)
-		if res := Encode(tmp); res != test.out {
+		if res := Encode(tmp); !bytes.Equal(res, test.out) {
 			t.Errorf("Base58Encode test #%d failed: got: %s want: %s",
 				x, res, test.out)
 			continue
@@ -73,12 +73,12 @@ func TestBase58(t *testing.T) {
 
 	// Base58Decode tests
 	for x, test := range hexTests {
-		b, err := hex.DecodeString(test.in)
+		b, err := hex.DecodeString(string(test.in))
 		if err != nil {
 			t.Errorf("hex.DecodeString failed failed #%d: got: %s", x, test.in)
 			continue
 		}
-		if res := Decode(test.out); bytes.Equal(res, b) != true {
+		if res, _ := Decode(test.out); bytes.Equal(res, b) != true {
 			t.Errorf("Base58Decode test #%d failed: got: %q want: %q",
 				x, res, test.in)
 			continue
@@ -87,7 +87,7 @@ func TestBase58(t *testing.T) {
 
 	// Base58Decode with invalid input
 	for x, test := range invalidStringTests {
-		if res := Decode(test.in); string(res) != test.out {
+		if res, err := Decode(test.in); err == nil {
 			t.Errorf("Base58Decode invalidString test #%d failed: got: %q want: %q",
 				x, res, test.out)
 			continue
@@ -96,10 +96,10 @@ func TestBase58(t *testing.T) {
 }
 
 func BenchmarkDecodeShort(b *testing.B) {
-	const in = "1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L"
+	var in = []byte("1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L")
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		_,_ = Decode(in)
+		_, _ = Decode(in)
 	}
 }
 
@@ -112,11 +112,11 @@ func BenchmarkEncodeShort(b *testing.B) {
 }
 
 func BenchmarkDecodeOneKilo(b *testing.B) {
-	const in = "3GimCffBLAHhXMCeNxX2nST6dBem9pbUi3KVKykW73LmewcFtMk9oh9eNPdNR2eSzNqp7Z3E21vrWUkGHzJ7w2yqDUDJ4LKo1w5D6aafZ4SUoNQyrSVxyVG3pwgoZkKXMZVixRyiPZVUpekrsTvZuUoW7mB6BQgDTXbDuMMSRoNR7yiUTKpgwTD61DLmhNZopNxfFjn4avpYPgzsTB94iWueq1yU3EoruWCUMvp6fc1CEbDrZY3pkx9oUbUaSMC37rruBKSSGHh1ZE3XK3kQXBCFraMmUQf8dagofMEg5aTnDiLAZjLyWJMdnQwW1FqKKztP8KAQS2JX8GCCfc68KB4VGf2CfEGXtaapnsNWFrHuWi7Wo5vqyuHd21zGm1u5rsiR6tKNCsFC4nzf3WUNxJNoZrDSdF9KERqhTWWmmcM4qdKRCtBWKTrs1DJD2oiK6BK9BgwoW2dfQdKuxojFyFvmxqPKDDAEZPPpJ51wHoFzBFMM1tUBBkN15cT2GpNwKzDcjHPKJAQ6FNRgppfQytzqpq76sSeZaWAB8hhULMJCQGU57ZUjvP7xYAQwtACBnYrjdxA91XwXFbq5AsQJwAmLw6euKVWNyv11BuHrejVmnNViWg5kuZBrtgL6NtzRWHtdxngHDMtuyky3brqGXaGQhUyXrkSpeknkkHL6NLThHH5NPnfFMVPwn2xf5UM5R51X2nTBzADSVcpi4cT7i44dT7o3yRKWtKfUzZiuNyTcSSrfH8KVdLap5ZKLmdPuXM65M2Z5wJVh3Uc4iv6iZKk44RKikM7zs1hqC4sBxRwLZjxhKvvMXDjDcYFkzyUkues4y7fjdCnVTxc4vTYUqcbY2k2WMssyj9SDseVc7dVrEvWCLQtYy79mJFoz1Hmsfk5ynE28ipznzQ3yTBugLHA6j6qW3S74eY4pJ6iynFEuXT4RqqkLGFcMh3goqS7CkphUMzP4wuJyGnzqa5tCno4U3dJ2jUL7Povg8voRqYAfiHyXC8zuhn225EdmRcSnu2pAuutQVV9hN3bkjfzAFUhUWKki8SwXtFSjy6NJyrYUiaze4p7ApsjHQBCgg2zAoBaGCwVN8991Jny31B5vPyYHy1oRSE4xTVZ7tTw9FyQ7w9p1NSEF4sziCxZHh5rFWZKAajc5c7KaMNDvHPNV6S62MTFGTyuKPQNbv9yHRGN4eH6SnZGW6snvEVdYCspWZ1U3Nbxo6vCmBK95UyYpcxHgg1CCGdU4s3edju2NDQkMifyPkJdkabzzHVDhJJbChAJc1ACQfNW74VXXwrBZmeZyA2R28MBctDyXuSuffiwueys2LVowLu9wiTHUox7KQjtHK2c9howk9czzx2mpnYzkVYH42CYsWa5514EM4CJEXPJSSbXSgJJ"
+	var in = []byte("3GimCffBLAHhXMCeNxX2nST6dBem9pbUi3KVKykW73LmewcFtMk9oh9eNPdNR2eSzNqp7Z3E21vrWUkGHzJ7w2yqDUDJ4LKo1w5D6aafZ4SUoNQyrSVxyVG3pwgoZkKXMZVixRyiPZVUpekrsTvZuUoW7mB6BQgDTXbDuMMSRoNR7yiUTKpgwTD61DLmhNZopNxfFjn4avpYPgzsTB94iWueq1yU3EoruWCUMvp6fc1CEbDrZY3pkx9oUbUaSMC37rruBKSSGHh1ZE3XK3kQXBCFraMmUQf8dagofMEg5aTnDiLAZjLyWJMdnQwW1FqKKztP8KAQS2JX8GCCfc68KB4VGf2CfEGXtaapnsNWFrHuWi7Wo5vqyuHd21zGm1u5rsiR6tKNCsFC4nzf3WUNxJNoZrDSdF9KERqhTWWmmcM4qdKRCtBWKTrs1DJD2oiK6BK9BgwoW2dfQdKuxojFyFvmxqPKDDAEZPPpJ51wHoFzBFMM1tUBBkN15cT2GpNwKzDcjHPKJAQ6FNRgppfQytzqpq76sSeZaWAB8hhULMJCQGU57ZUjvP7xYAQwtACBnYrjdxA91XwXFbq5AsQJwAmLw6euKVWNyv11BuHrejVmnNViWg5kuZBrtgL6NtzRWHtdxngHDMtuyky3brqGXaGQhUyXrkSpeknkkHL6NLThHH5NPnfFMVPwn2xf5UM5R51X2nTBzADSVcpi4cT7i44dT7o3yRKWtKfUzZiuNyTcSSrfH8KVdLap5ZKLmdPuXM65M2Z5wJVh3Uc4iv6iZKk44RKikM7zs1hqC4sBxRwLZjxhKvvMXDjDcYFkzyUkues4y7fjdCnVTxc4vTYUqcbY2k2WMssyj9SDseVc7dVrEvWCLQtYy79mJFoz1Hmsfk5ynE28ipznzQ3yTBugLHA6j6qW3S74eY4pJ6iynFEuXT4RqqkLGFcMh3goqS7CkphUMzP4wuJyGnzqa5tCno4U3dJ2jUL7Povg8voRqYAfiHyXC8zuhn225EdmRcSnu2pAuutQVV9hN3bkjfzAFUhUWKki8SwXtFSjy6NJyrYUiaze4p7ApsjHQBCgg2zAoBaGCwVN8991Jny31B5vPyYHy1oRSE4xTVZ7tTw9FyQ7w9p1NSEF4sziCxZHh5rFWZKAajc5c7KaMNDvHPNV6S62MTFGTyuKPQNbv9yHRGN4eH6SnZGW6snvEVdYCspWZ1U3Nbxo6vCmBK95UyYpcxHgg1CCGdU4s3edju2NDQkMifyPkJdkabzzHVDhJJbChAJc1ACQfNW74VXXwrBZmeZyA2R28MBctDyXuSuffiwueys2LVowLu9wiTHUox7KQjtHK2c9howk9czzx2mpnYzkVYH42CYsWa5514EM4CJEXPJSSbXSgJJ")
 	b.SetBytes(int64(len(in))) // 1024
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		_,_ = Decode(in)
+		_, _ = Decode(in)
 	}
 }
 
